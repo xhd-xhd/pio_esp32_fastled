@@ -3,11 +3,28 @@
 // 命令定义表 - 清晰易维护的格式
 const FrameParser::CommandDef FrameParser::commandTable[] = {
     // 格式: {cmdType, length, "name"}
-    {0x01, 3, "ColorSet"},      // 颜色设置
-    {0x02, 4, "ModeSet"},       // 动画模式设置
-    {0x03, 5, "ParamSet"},      // 参数设置
-    {0x04, 6, "RGBCustom"},     // 自定义RGB值
-    {0xFF, 2, "SysCmd"}         // 系统命令
+    {0x01,  3, "set_L_level"},           // 颜色设置
+    {0x02,  3, "set_all_L_level"},       // 动画模式设置
+    {0x07,  2, "switch"},                // 参数设置
+    {0x14,  2, "welcome"},               // 自定义RGB值
+    {0x06,  4, "set_all_color"},         // 设置所有颜色
+    {0x10,  4, "set_xk_color"},          // 设置星空灯颜色
+    {0x11,  4, "set_lx_color"},          // 设置流星颜色
+    {0x13,  5, "set_xk_1_point_color"},  // 设置星空灯单点颜色
+    {0x03,  3, "set_voice_sensitivity"}, // 设置声音灵敏度
+    {0x85,  2, "set_xk_breath_speed"},   // 设置星空灯呼吸速度
+    {0x86,  3, "set_lx_para"},           // 设置流星参数
+    {0x35, 20, "read_config"},           // 读取配置 长度暂定
+    {0x40, 20, "set_led_num"},           // 设置led数量 长度暂定
+    {0x41,  2, "set_voice_source"},      // 设置声音来源
+    {0x50,  2, "set_control_source"},    // 设置控制来源
+    {0x23, 20, "set_bt_name"},           // 设置蓝牙名称 长度暂定
+    {0x24, 20, "device_version"},        // 设备型号版本 长度暂定 //牛魔的到底是设置还是读取？
+    {0x44,  4, "set_shutdown_delay"},    // 设置关机延时
+    {0x21,  3, "set_L_top"},             // 设置亮度上限
+    {0x80,  2, "set_xk_mode"},           // 设置星空灯模式
+    {0x81,  2, "set_lx_mode"},           // 设置流星效果
+    {0xFF,  2, "SysCmd"}                 // 系统命令
 };
 
 const uint8_t FrameParser::commandTableSize = sizeof(FrameParser::commandTable) / sizeof(FrameParser::CommandDef);
@@ -143,6 +160,7 @@ boolean FrameParser::feedByte(uint8_t byte) {
         
         // HEX字符串长度应该是字节数*2
         uint8_t expectedHexLength = expectedLength * 2;
+        //添加一个不定长数据判断，如果命令类型是0xff，则允许长度 > 0 就过
         if(bufferIndex != expectedHexLength) {
             Serial.print("❌ 帧错误: 命令长度不匹配 (期望");
             Serial.print(expectedLength);
