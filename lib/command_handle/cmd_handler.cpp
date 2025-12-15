@@ -101,12 +101,12 @@ void handleCommand(Frame frame) {
                 case 0x05://触发迎宾效果
                 {
                     //如果当前就是迎宾模式，忽略此次触发
-                    if(xk_para.xk_mode == MODE_WELCOME) break;
+                    if(xk_para.xk_mode == MODE_WELCOME_1 || xk_para.xk_mode == MODE_WELCOME_2) break;
 
                     //触发迎宾效果
-                    xk_para.xk_mode = MODE_WELCOME;
+                    xk_para.xk_mode = MODE_WELCOME_1;
                     //60s倒计时，到时间后结束迎宾效果，恢复上次模式
-                    onceTimer.once_ms(5 * 1000, [](){
+                    onceTimer.once_ms(xk_para.xk_welcome_s * 1000, [](){
                         // xk_para.xk_mode = xk_para.xk_last_mode;
                         xk_para.xk_mode = MODE_STATIC;
                     });
@@ -157,7 +157,6 @@ void handleCommand(Frame frame) {
 
         case 0x13: // 星空灯单组（3个）LED颜色设置
         {
-            //todo 目前设置单点颜色，其他颜色如何处置？先统一回到哪个状态？
             xk_para.xk_mode = MODE_STATIC;
             uint8_t group = frame.data[1];
             uint8_t r = frame.data[2];
@@ -229,18 +228,50 @@ void handleCommand(Frame frame) {
         }
         break;
            
-        case 0x40: //调整灯珠数量
+        case 0x40: //调整灯珠数量， 暂时格式有问题，跟表格对不上，表格目前我看不懂
         {
+            uint8_t type = frame.data[1];
+            uint8_t num = frame.data[2];
+            if(type == 0x02) //星空灯
+            {
+                xk_para.xk_led_num = num;
+            }
+            else if(type == 0x03) //流星灯
+            {
+                lx_para.lx_led_num = num;
+            }
         }
         break;
            
         case 0x41: // 音源选择
         {
+            uint8_t source = frame.data[1];
+            if(source == 0x01)
+            {
+                general_para.audio_source = HORN;
+            }
+            else if(source == 0x02)
+            {
+                general_para.audio_source = MICROPHONE;
+            }
+            //切换了音源，更新工作谁来做？如果当前正好是music, 搞个音乐效果结构体参数
+            if(xk_para.xk_mode == MODE_MUSIC)
+            {
+            }
         }
         break;
            
         case 0x50: // 控制源选择
         {
+            uint8_t source = frame.data[1];
+            if(source == 0x00)
+            {
+                general_para.control_source = APP_ONLY;
+            }
+            else if(source == 0x01)
+            {
+                general_para.control_source = APP_and_CAR;
+            }
         }
         break;   
         
@@ -259,18 +290,55 @@ void handleCommand(Frame frame) {
         }
         break;
            
-        case 0x21: // 氛围灯总亮度设置
+        case 0x21: // 氛围灯亮度上限设置
         {
+            uint8_t type = frame.data[1];
+            uint8_t maxVal = frame.data[2];
+            if(type == 0x02)
+            {
+                set_L_top(maxVal, xk_para);
+            }
+            else if(type == 0x03)
+            {
+                set_L_top(maxVal, lx_para);
+            }
         }
         break;
 
         case 0x80: // 星空灯模式
         {
+            uint8_t mode = frame.data[1];
+            if(xk_para.xk_mode == mode) break; //如果模式没变就不管了
+
+            if(mode >= MODE_STATIC && mode <= MODE_BREATH_RANDOM)
+            {
+                //保存上次模式
+                xk_para.xk_last_mode = xk_para.xk_mode;
+                xk_para.xk_mode = static_cast<XK_LEDMode_E>(mode);
+            }
+            if(mode == MODE_WELCOME_1)
+            {
+                //60s倒计时，到时间后结束迎宾效果，恢复上次模式
+                onceTimer.once_ms(xk_para.xk_welcome_s * 1000, [](){
+                // xk_para.xk_mode = xk_para.xk_last_mode;
+                xk_para.xk_mode = MODE_STATIC;
+                });
+            }
+            if(xk_para.xk_last_mode != MODE_BREATH_BW && xk_para.xk_mode == MODE_BREATH_BW)
+            {
+                //进蓝白呼吸初始化
+                xk_bw_breath_init();
+            }
         }
         break;
            
         case 0x81: // 流星效果
         {
+            uint8_t mode = frame.data[1];
+            if(mode >= MODE_DEFAULT && mode <= MODE_DOUBLE)
+            {
+                lx_para.lx_mode = static_cast<LX_LEDMode_E>(mode);
+            }
         }
         break;
 
@@ -279,96 +347,3 @@ void handleCommand(Frame frame) {
             break;
     }
 }
-
-
-// void rainbowMode() {
-//     static uint8_t hue = 0;
-//     fill_rainbow(leds, NUM_LEDS, hue, 255 / NUM_LEDS);
-//     hue += (speed / 50.0);
-// }
-
-// void pulseMode() {
-//     static uint8_t brightness = 0;
-//     brightness = (sin8(millis() / (151 - speed)) + 1) / 2;
-    
-//     uint8_t pulseVal = brightness;
-    
-//     for(int i = 0; i < NUM_LEDS; i++) {
-//         leds[i] = CHSV(0, 255, pulseVal);
-//     }
-// }
-
-// void waveMode() {
-//     static uint8_t hue = 0;
-//     for(int i = 0; i < NUM_LEDS; i++) {
-//         uint8_t waveBright = sin8(hue + (i * 255 / NUM_LEDS));
-//         leds[i] = CHSV(0, 200, waveBright);
-//     }
-//     hue += (speed / 50.0);
-// }
-
-// void strobeMode() {
-//     static unsigned long strobeTimer = 0;
-//     static boolean isOn = true;
-    
-//     if(millis() - strobeTimer > (150 - speed)) {
-//         isOn = !isOn;
-//         strobeTimer = millis();
-//     }
-    
-//     if(isOn) {
-//         fill_solid(leds, NUM_LEDS, CRGB::White);
-//     } else {
-//         fill_solid(leds, NUM_LEDS, CRGB::Black);
-//     }
-// }
-
-// void twinkleMode() {
-//     for(int i = 0; i < NUM_LEDS; i++) {
-//         if(random8() < (speed * 2)) {
-//             leds[i] = CRGB::White;
-//         } else {
-//             leds[i].nscale8(200);
-//         }
-//     }
-// }
-
-// void fireMode() {
-//     // 简化的火焰效果
-//     for(int i = 0; i < NUM_LEDS; i++) {
-//         uint8_t heat = random8(150, 255);
-        
-//         if(i < NUM_LEDS / 3) {
-//             leds[i] = HeatColor(heat);
-//         } else if(i < (NUM_LEDS * 2) / 3) {
-//             leds[i] = HeatColor(heat - 30);
-//         } else {
-//             leds[i] = HeatColor(heat - 60);
-//         }
-//     }
-// }
-
-// void chaseMode() {
-//     static uint8_t pos = 0;
-//     static unsigned long lastUpdate = 0;
-    
-//     if(millis() - lastUpdate > (151 - speed)) {
-//         fadeToBlackBy(leds, NUM_LEDS, 20);
-//         leds[pos] = CRGB::White;
-//         if(pos > 0) leds[pos - 1] = CRGB(100, 100, 100);
-        
-//         pos = (pos + 1) % NUM_LEDS;
-//         lastUpdate = millis();
-//     }
-// }
-
-// void colorfulMode() {
-//     static uint8_t colorPos = 0;
-    
-//     for(int i = 0; i < NUM_LEDS; i++) {
-//         uint8_t hue = (colorPos + i * 256 / NUM_LEDS) % 256;
-//         leds[i] = CHSV(hue, 255, 255);
-//     }
-    
-//     colorPos += (speed / 50.0);
-// }

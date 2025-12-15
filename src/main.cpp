@@ -22,7 +22,10 @@ void setup() {
     display_chip_info();
     displayMenu();
 
-    periodicTimer.attach_ms(10, _10_ms_task);  // 每10ms更新一次LED动画
+    //periodicTimer.attach_ms(5000, _10_ms_task);  // 每10ms更新一次LED动画
+    // onceTimer.once_ms(5000, []() {
+    //         serial.printBothln("一次性定时器触发！");
+    // });
 }
 
 void loop() {
@@ -41,8 +44,13 @@ void loop() {
         }
     }
 
-    // 更新LED动画 10ms一次
-    //updateLED();
+    // 每10ms任务
+    static uint32_t lastLed = 0;
+    uint32_t now = millis();
+    if (now - lastLed >= 10) {
+        lastLed = now;
+        _10_ms_task();
+    }
 }
 
 
