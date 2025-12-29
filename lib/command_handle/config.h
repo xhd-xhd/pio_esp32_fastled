@@ -11,7 +11,8 @@
 #define TOP_BRIGHTNESS  100
 #define XK_LED_PIN     2
 #define LX_LED_PIN     3
-#define LED_TYPE    WS2812B
+#define LED_TYPE    WS2812B 
+// #define LED_TYPE    SM16824E
 #define COLOR_ORDER GRB
 
 
@@ -47,7 +48,7 @@ enum XK_LEDMode_E {
     MODE_MUSIC = 4,              // 跟随音乐节奏
     MODE_WELCOME_1 = 5,          // 迎宾 60s自动退出
     MODE_WELCOME_2 = 6,          // 迎宾 收到结束信号退出
-    MODE_BREATH_DEFAULT = 7,     // 单色呼吸
+    MODE_BREATH_STATIC = 7,     // 单色呼吸
     MODE_BREATH_RANDOM = 8,      // 随机呼吸
 };
 
@@ -73,7 +74,7 @@ typedef struct {
     uint8_t xk_L_level;                 //收到的亮度 0-100
     uint8_t xk_L_actual;                //实际亮度 0-255
     uint8_t xk_breath_speed;
-    uint8_t xk_welcome_s;
+    uint8_t xk_welcome_s;               //迎宾时间 s
 } XK_PARA_T;
 
 typedef struct {

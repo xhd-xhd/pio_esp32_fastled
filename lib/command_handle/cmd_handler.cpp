@@ -180,6 +180,8 @@ void handleCommand(Frame frame) {
         case 0x85: // 星空灯呼吸速度设置
         {
             uint8_t level = frame.data[1];
+            if(level == 0) level = 1;
+            if(level > 5) level = 5;
             xk_para.xk_breath_speed = level;
         }
         break;
@@ -324,10 +326,25 @@ void handleCommand(Frame frame) {
                 xk_para.xk_mode = MODE_STATIC;
                 });
             }
-            if(xk_para.xk_last_mode != MODE_BREATH_BW && xk_para.xk_mode == MODE_BREATH_BW)
+            if(xk_para.xk_mode == MODE_BREATH_BW)
             {
                 //进蓝白呼吸初始化
                 xk_bw_breath_init();
+            }
+            if(xk_para.xk_mode == MODE_BREATH_GAP)
+            {
+                //间隔呼吸初始化
+                gap_breath_init();
+            }
+            if(xk_para.xk_mode == MODE_BREATH_STATIC)
+            {
+                //单色呼吸初始化
+                static_breath_init();
+            }      
+            if(xk_para.xk_mode == MODE_BREATH_RANDOM)
+            {
+                //单色呼吸初始化
+                random_breath_init();
             }
         }
         break;
@@ -335,8 +352,11 @@ void handleCommand(Frame frame) {
         case 0x81: // 流星效果
         {
             uint8_t mode = frame.data[1];
+            if(lx_para.lx_mode == mode) break; //如果模式没变就不管了
+
             if(mode >= MODE_DEFAULT && mode <= MODE_DOUBLE)
             {
+                lx_para.lx_last_mode = lx_para.lx_mode;
                 lx_para.lx_mode = static_cast<LX_LEDMode_E>(mode);
             }
         }

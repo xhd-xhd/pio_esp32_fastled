@@ -50,6 +50,7 @@ void loop() {
     if (now - lastLed >= 10) {
         lastLed = now;
         _10_ms_task();
+        //serial.printBothln(String(millis()));  // 获取从启动开始的毫秒数
     }
 }
 

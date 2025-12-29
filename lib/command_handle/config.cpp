@@ -41,7 +41,7 @@ LX_PARA_T lx_para = {
     .lx_led_num = LX_LED_NUM,
     .lx_L_top_limit = TOP_BRIGHTNESS,
     .lx_L_level = TOP_BRIGHTNESS,
-    .lx_total_gap = 5,
+    .lx_total_gap = 3,
     .lx_1_sepped = 5,
     .lx_1_dir = 0,
     .lx_1_2_gap = 5,
@@ -52,8 +52,8 @@ LX_PARA_T lx_para = {
 
 void fast_led_init() {
     // 创建独立控制器
-    xk_strip = &FastLED.addLeds<LED_TYPE, XK_LED_PIN, COLOR_ORDER>(xk_leds, XK_LED_NUM);
-    //lx_strip = &FastLED.addLeds<LED_TYPE, LX_LED_PIN, COLOR_ORDER>(lx_leds, LX_LED_NUM);
+    // xk_strip = &FastLED.addLeds<LED_TYPE, XK_LED_PIN, COLOR_ORDER>(xk_leds, XK_LED_NUM);
+    lx_strip = &FastLED.addLeds<LED_TYPE, XK_LED_PIN, COLOR_ORDER>(lx_leds, LX_LED_NUM);
 }
 
 
